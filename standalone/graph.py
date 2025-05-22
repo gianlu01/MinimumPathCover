@@ -42,44 +42,53 @@ def read_gfa(nomeFile : str) -> tuple:
                 edge = (from_node, to_node)
                 archi.append(edge)
 
-            elif line.startswith('P'):
+            elif line.startswith('P') or line.startswith('W'):
             
                 campi = line.strip().split('\t')
                 nome_percorso = campi[1]
-                segmenti = campi[2].split(',')
 
-                # Rimuove l'orientamento del nodo togliendo + o -
-                nodi = [s[:-1] for s in segmenti]
+                if line.startswith('P'):
+
+                    segmenti = campi[2].split(',')
+
+                    # Rimuove l'orientamento del nodo togliendo + o -
+                    
+                    nodi = [s[:-1] for s in segmenti]
+
+                if line.startswith('W'):
+
+                    percorso = campi[-1]
+
+                    #Separa i vari nodi del percorso
+
+                    nodi = [s.lstrip('>') for s in percorso.split('>') if s]
+
                 paths.aggiungi_percorso(nome_percorso, nodi)
 
-        #Ordino gli i nodi e gli archi in ordine crescente:
+        grafo.add_nodes_from(nodi)
+        grafo.add_edges_from(archi)
 
-        nodi_ordinati = sorted(nodi, key=int)
-        archi_ordinati = sorted(archi, key=lambda x: (int(x[0]), int(x[1])))
+        if nx.is_directed_acyclic_graph(grafo):
 
-        #Aggiungo i nodi e gli archi al grafo
+            topological_order = get_graph_topological_order(grafo)
 
-        for nodo in nodi_ordinati:
+            #Aggiungo i nodi e gli archi al grafo
 
-            grafo.add_node(nodo)
-        
-        for u, v in archi_ordinati:
+            grafo.clear()
+            grafo.add_nodes_from(topological_order)
+            grafo.add_edges_from(archi)
 
-            grafo.add_edge(u, v)
-
-    if nx.is_directed_acyclic_graph(grafo):
-
-        return (grafo, paths)
+            return (grafo, paths)
     
-    else:
+        else:
 
-        cycles = list(nx.simple_cycles(grafo))
-        
-        for cycle in cycles:
+            cycles = list(nx.simple_cycles(grafo))
+            
+            for cycle in cycles:
 
-            print(f"[{cycles.index(cycle)}]\t{cycle}")
+                print(f"[{cycles.index(cycle)}]\t{cycle}")
 
-        raise ParseError("Il grafo non è aciclico!")
+            raise ParseError("Il grafo non è aciclico!")
 
 
 
@@ -88,8 +97,8 @@ def read_gfa(nomeFile : str) -> tuple:
 
 def convert_graph(grafo : nx.DiGraph) -> nx.DiGraph:
 
-    global_source = "G"
-    global_sink = "S"
+    global_source = "global_source"
+    global_sink = "global_sink"
 
     g_star = nx.DiGraph()
 
@@ -105,15 +114,20 @@ def convert_graph(grafo : nx.DiGraph) -> nx.DiGraph:
 
         g_star.add_edge(f"{u}p", f"{v}m", demand=0, flow=0)
 
-    #Aggiungo la sorgente globale e la destinazione globale
+    '''
 
+    #Aggiungo la sorgente globale e la destinazione globale
+    
     g_star.add_node(global_source, color=1, u=0, m=1, predecessor=None)
     g_star.add_node(global_sink, color=1, u=0, m=1, predecessor=None)
 
+    
     for node in grafo.nodes:
 
         g_star.add_edge(global_source, f"{node}m", demand=0, flow=0)
         g_star.add_edge(f"{node}p", global_sink, demand=0, flow=0)
+    
+    '''
 
     return g_star
 
@@ -134,3 +148,8 @@ def reset_flow(graph : nx.DiGraph) -> None:
     for u, v, values in graph.edges(data=True):
 
         values['flow'] = 0
+
+
+def get_graph_topological_order(grafo : nx.digraph) -> list:
+
+    return list(nx.topological_sort(grafo))

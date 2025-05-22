@@ -24,7 +24,7 @@ def dfs(path_cover : bool, graph : nx.DiGraph) -> None:
 
         if graph.nodes[node]['color'] == 1:
 
-            dfs_visit_cover(node, graph)
+            dfs_visit_cover_iterative(node, graph)
 
 
 
@@ -45,8 +45,6 @@ def dfs_visit_cover(node: str, graph : nx.DiGraph) -> None:
 
             if graph.nodes[neigh]['color'] == 1:
 
-                print("")
-
                 dfs_visit_cover(neigh, graph)
 
             if graph.nodes[neigh]['u'] > max:
@@ -59,6 +57,91 @@ def dfs_visit_cover(node: str, graph : nx.DiGraph) -> None:
 
     graph.nodes[node]['color'] = 0
     topological_order.insert(0, node)
+
+
+
+def dfs_visit_cover_iterative(start_node: str, graph: nx.DiGraph) -> None:
+
+    stack = [start_node]
+    visitato = set()
+
+    while stack:
+
+        #Prendo il primo elemento dello stack
+
+        node = stack[-1]
+
+        if graph.nodes[node]['color'] == 1:
+
+            #Segno il nodo come scoperto
+
+            graph.nodes[node]['color'] = 2
+
+            #Variabile per preservare il post-order della visità in profondità
+            #Posticipo l'elaborazione del nodo corrente, se ci sono successori 
+            #non ancora completamente esplorati. Nella ricorsiva, questa logica
+            #è implicita: il codice dopo la chiamata ricorsiva non viene 
+            #eseguito finché non torno a quella chiamata.
+            #Serve quindi a simulare questa attesa implicitamente
+
+            #In un grafo A : [B, C] - B : [D] - C : [D] - D : []
+
+            #stack = [A], A diventa grigio
+            #   Successori: B, C -> Inserisco B nello stack
+            #       tutti_visitati = False (almeno un successore è ancora da
+            #                               visitare)
+            #stack = [A, B], B diventa grigio
+            #   Successori: [D]
+            #       tutti_visitati = False (almeno un successore è ancora da
+            #                               visitare)
+            #stack = [A, B, D], D è foglia, u[D] = m[D] = 1
+            #   etc..
+
+            tutti_visitati = True
+
+            for neigh in graph.successors(node):
+
+                if graph.nodes[neigh]['color'] == 1:
+
+                    stack.append(neigh)
+                    tutti_visitati = False
+
+            if not tutti_visitati:
+
+                continue  # aspetta di visitare prima tutti i successori
+
+        #Tutti i successori sono già stati esplorati
+
+        if node not in visitato:
+
+            if not list(graph.successors(node)):
+
+                graph.nodes[node]['u'] = graph.nodes[node]['m']
+
+            else:
+
+                max_u = -1
+                max_node = ""
+
+                for neigh in graph.successors(node):
+
+                    if graph.nodes[neigh]['u'] > max_u:
+
+                        max_u = graph.nodes[neigh]['u']
+                        max_node = neigh
+
+                graph.nodes[node]['u'] = graph.nodes[node]['m'] + graph.nodes[max_node]['u']
+
+            #Visita terminata
+
+            graph.nodes[node]['color'] = 0
+            topological_order.insert(0, node)
+            visitato.add(node)
+            stack.pop()
+
+        else:
+
+            stack.pop()  # già completato, rimuovilo
 
 
 
@@ -76,7 +159,7 @@ def clear_topological_order() -> None:
 #Visita in profondità utilizzata nel calcolo del flusso tramite l'algoritmo di
 #Ford-Fulkerson. Serve a riempire il dizionario dei predecessori
 
-def dfs_visit_flow(node: str, graph : nx.DiGraph) -> None:
+def dfs_visit_flow_recursive(node: str, graph : nx.DiGraph) -> None:
 
     graph.nodes[node]['color'] = 2 #Imposto a grigio il colore, nodo scoperto    
 
@@ -85,9 +168,50 @@ def dfs_visit_flow(node: str, graph : nx.DiGraph) -> None:
         if graph.nodes[neigh]['color'] == 1:
 
             graph.nodes[neigh]['predecessor'] = node
-            dfs_visit_flow(neigh, graph)
+            dfs_visit_flow_recursive(neigh, graph)
 
     graph.nodes[node]['color'] = 0
+
+
+
+def dfs_visit_flow_iterative(start_node: str, graph: nx.DiGraph) -> None:
+
+    #Alla fine non è necessario l'utilizzo di tutti_visitati perché non c'è
+    #nessun calcolo che dipende dai successori. Dato che serve sono a segnare
+    #i successori.
+
+    stack = [start_node]
+
+    while stack:
+
+        # Prendo il nodo in cima allo stack
+
+        node = stack[-1]  
+
+        if graph.nodes[node]['color'] == 1:
+
+            graph.nodes[node]['color'] = 2  # grigio = scoperto
+
+            for neigh in graph.successors(node):
+
+                if graph.nodes[neigh]['color'] == 1:
+
+                    graph.nodes[neigh]['predecessor'] = node
+
+                    #Inserisco nello stack il nodo successore
+
+                    stack.append(neigh)
+
+                    #Interrompo il ciclo in modo da "entrare" nel nodo appena
+                    #aggiunto come nella ricorsione
+                    break 
+        else:
+            
+            #Se siamo tornati al nodo chiamante, lo marchio come nero
+            #e lo rimuovo dallo stack
+            graph.nodes[node]['color'] = 0
+            stack.pop()
+
         
         
 

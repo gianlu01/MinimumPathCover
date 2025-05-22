@@ -2,7 +2,7 @@ import networkx as nx
 
 from copy import deepcopy
 from dfs import reset_colors
-from dfs import dfs_visit_flow
+from dfs import dfs_visit_flow_recursive
 from dfs import get_dfs_path
 from graph import reset_flow
 from sys import maxsize
@@ -49,7 +49,7 @@ def ford_fulkerson(graph : nx.DiGraph, cover : list) -> list:
     #cammino aumentante sarà dato proprio dall'ordinamento topologico T come
     #nella path cover.  
 
-    dfs_visit_flow(source, residual_graph)
+    dfs_visit_flow_recursive(source, residual_graph)
     predecessor_path = get_dfs_path(sink, residual_graph)
 
     #Una volta che ho trovato il cammino aumentante procedo a trovare il valore
@@ -121,7 +121,7 @@ def ford_fulkerson(graph : nx.DiGraph, cover : list) -> list:
 
             predecessor_path.clear()
             reset_colors(residual_graph)
-            dfs_visit_flow(source, residual_graph)
+            dfs_visit_flow_recursive(source, residual_graph)
             predecessor_path = get_dfs_path(sink, residual_graph)
 
 
@@ -154,7 +154,7 @@ def ford_fulkerson(graph : nx.DiGraph, cover : list) -> list:
     cover.clear()
     min_flow = deepcopy(graph)
     reset_colors(min_flow)
-    dfs_visit_flow(source, min_flow)
+    dfs_visit_flow_recursive(source, min_flow)
     predecessor_path = get_dfs_path(sink, min_flow)
 
     while predecessor_path:
@@ -187,7 +187,7 @@ def ford_fulkerson(graph : nx.DiGraph, cover : list) -> list:
             if min_flow.number_of_edges() > 0:
 
                 reset_colors(min_flow)
-                dfs_visit_flow(source, min_flow)
+                dfs_visit_flow_recursive(source, min_flow)
                 predecessor_path = get_dfs_path(sink, min_flow)
 
             else:
