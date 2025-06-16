@@ -4,8 +4,7 @@ digraph{
     A -> D
     B -> C
     C -> H
-    D -> E
-    E -> F
+    D -> F
     F -> G
     F -> C
     G -> I

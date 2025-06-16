@@ -39,7 +39,7 @@ def main():
     
     setrecursionlimit(10000)
 
-    nomeFile = "testing/Grafo 5"
+    nomeFile = "testing/MHC_graph_1000"
 
     try:
 
@@ -51,7 +51,7 @@ def main():
         #Reinserire inoltre la global source e global sink in caso di grafi
         #non appartenenti alla cartella testing
 
-        if len(cover) >= len(percorsi):
+        if len(cover) <= len(percorsi):
 
             print("Path cover iniziale ottenuta:\n")
 
@@ -85,7 +85,7 @@ def main():
 
             stampa_cover(final_cover)
 
-            print("Creo la matrice binaria della path_cover")
+            print("Creo la matrice binaria della path cover")
 
             topological_order = get_graph_topological_order(grafo)
             matrix = path_cover_binary_matrix(topological_order, final_cover)
@@ -101,7 +101,7 @@ def main():
                 boolean_path.append(to_boolean_array(topological_order, path))
 
             print("\tPercorsi booleani creati")
-            print("Procedo con la decomposizione in blocchi")
+            print("Procedo con la decomposizione in blocchi tramite PBWT")
 
             for path in boolean_path:
 
@@ -110,8 +110,7 @@ def main():
 
                 print(blocks)
             
-            print("\tDecomposizioni in blocchi effettuata")
-
+            print(f"\tDecomposizioni in blocchi effettuata per {len(percorsi)} percorsi.")
             print("Procedo a salvare il tutto su file:")
             write_blocks(nomeFile, percorsi, decompose)
             print("\tFatto.")
