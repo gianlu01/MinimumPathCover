@@ -1,4 +1,5 @@
 import traceback
+import time
 
 from path_cover import path_cover
 from graph import read_gfa
@@ -8,8 +9,11 @@ from ford_fulkerson import ford_fulkerson
 from sys import setrecursionlimit
 from decompose import path_cover_binary_matrix
 from decompose import to_boolean_array
+from decompose import pbwt
 from decompose import blocks_decompose
 from decompose import write_blocks
+
+
 
 def stampa_cover(cover : list) -> None:
 
@@ -55,9 +59,9 @@ def main():
 
             print("Path cover iniziale ottenuta:\n")
 
-            stampa_cover(cover)
+            #stampa_cover(cover)
 
-            print("\tProcedo a creare il flusso minimo:")
+            #print("\tProcedo a creare il flusso minimo:")
 
             cover = ford_fulkerson(g_star, cover.copy())
             final_cover = list()
@@ -76,15 +80,15 @@ def main():
 
                         final_path.append(node[:-1])
 
-                print(final_path)
+                #print(final_path)
                 final_cover.append(final_path.copy())
                 final_path.clear()
 
             
-            print("\t\tLa copertura minima finale è:")
+            #print("\t\tLa copertura minima finale è:")
+            #stampa_cover(final_cover)
 
-            stampa_cover(final_cover)
-
+            print(f"La lunghezza della cover ottenuta è:\t{len(final_cover)}")
             print("Creo la matrice binaria della path cover")
 
             topological_order = get_graph_topological_order(grafo)
@@ -93,6 +97,11 @@ def main():
             decompose = list()
 
             print("\tMatrice binaria creata")
+            print("Calcolo la PBWT della matrice binaria")
+
+            pbwt_values = pbwt(matrix)
+
+            print("\tFatto.")
             print("Procedo a creare gli array booleani dei percorsi sul grafo")
 
             for percorso in percorsi.nomi_percorsi():
@@ -103,14 +112,23 @@ def main():
             print("\tPercorsi booleani creati")
             print("Procedo con la decomposizione in blocchi tramite PBWT")
 
+            start = time.perf_counter()
+            #media = 0
+
             for path in boolean_path:
 
-                blocks = blocks_decompose(path, matrix)
+                blocks = blocks_decompose(path, matrix, pbwt_values)
+                #media += len(blocks) - blocks.count(-1)
+
                 decompose.append(blocks)
 
-                print(blocks)
+                #print(blocks)
             
+            end = time.perf_counter()
+
             print(f"\tDecomposizioni in blocchi effettuata per {len(percorsi)} percorsi.")
+            #print(f"\tMedia nodi:\t{round(media/len(decompose), 3)}")
+            print(f"\tTempo impiegato:\t{round(end-start, 1)}s")
             print("Procedo a salvare il tutto su file:")
             write_blocks(nomeFile, percorsi, decompose)
             print("\tFatto.")

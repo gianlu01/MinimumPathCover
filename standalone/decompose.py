@@ -52,12 +52,12 @@ def to_boolean_array(topological_order : list, graph_path : list) -> list:
 
 
 
-def blocks_decompose(boolean_array : list, boolean_matrix : list[list[bool]]) -> list:
+def blocks_decompose(boolean_array : list, boolean_matrix : list[list[bool]], pbwt_values : tuple) -> list:
 
     index = 0
     num_colonne = len(boolean_matrix[0])
     matched_block = list()
-    a_totale, y_totale = pbwt(boolean_matrix)
+    a_totale, y_totale = pbwt_values
 
     while index < num_colonne:
 

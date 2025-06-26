@@ -99,7 +99,6 @@ def convert_graph(grafo : nx.DiGraph) -> nx.DiGraph:
 
     global_source = "global_source"
     global_sink = "global_sink"
-
     g_star = nx.DiGraph()
 
     # Sdoppia ogni nodo in Ap e Am
@@ -114,20 +113,15 @@ def convert_graph(grafo : nx.DiGraph) -> nx.DiGraph:
 
         g_star.add_edge(f"{u}p", f"{v}m", demand=0, flow=0)
 
-    '''
-
     #Aggiungo la sorgente globale e la destinazione globale
     
     g_star.add_node(global_source, color=1, u=0, m=1, predecessor=None)
     g_star.add_node(global_sink, color=1, u=0, m=1, predecessor=None)
 
-    
     for node in grafo.nodes:
 
         g_star.add_edge(global_source, f"{node}m", demand=0, flow=0)
         g_star.add_edge(f"{node}p", global_sink, demand=0, flow=0)
-    
-    '''
 
     return g_star
 
