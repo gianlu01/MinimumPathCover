@@ -1,0 +1,189 @@
+import traceback
+import time
+import math
+
+from path_cover import path_cover
+from graph import read_gfa
+from graph import convert_graph
+from graph import get_graph_topological_order
+from ford_fulkerson import ford_fulkerson
+from sys import setrecursionlimit
+from decompose import path_cover_binary_matrix
+from decompose import to_boolean_array
+from decompose import pbwt
+from decompose import blocks_decompose
+from decompose import write_blocks
+
+
+
+def stampa_cover(cover : list) -> None:
+
+    for path in cover:
+
+        print(f"\n[{cover.index(path)}]:\n\t{path}")
+        print("-" * 100)
+
+
+#Grafi non - aciclici:
+
+#   /spoa
+
+#   A-3105
+#   DMB-3109
+#   DQA1-3117
+#   DQB1-3119
+#   DRB1-3123
+#   DRB3-3125
+#   F-3134
+#   H-3136
+#   MICB-4277
+
+
+
+def main():   
+    
+    setrecursionlimit(10000)
+
+    nomeFile = "testing/MHC_graph_1000"
+
+    try:
+
+        perc = 0.25
+
+        while perc != 1:
+
+            grafo, percorsi = read_gfa(nomeFile)
+            g_star = convert_graph(grafo)
+            cover = path_cover(g_star)
+
+            #Cambiare in <= se non si usa il grafo 5
+            #Reinserire inoltre la global source e global sink in caso di grafi
+            #non appartenenti alla cartella testing
+
+            if len(cover) <= len(percorsi):
+
+                print("Path cover iniziale ottenuta:\n")
+
+                #stampa_cover(cover)
+
+                #print("\tProcedo a creare il flusso minimo:")
+
+                cover = ford_fulkerson(g_star, cover.copy())
+                final_cover = list()
+
+                #Una volta ottenuta la cover finale, procedo a ripulirla dalla 
+                #sorgente globale e destinazione globale. Devo inoltre rimuovere
+                #tutti i nodi "m" e "p" lasciando solamente il nodo
+
+                for path in cover:
+
+                    final_path = list()
+
+                    for node in path:
+
+                        if (node != "global_source" and node != "global_sink") and (node[:-1] not in final_path):
+
+                            final_path.append(node[:-1])
+
+                    #print(final_path)
+                    final_cover.append(final_path.copy())
+                    final_path.clear()
+
+                
+                #print("\t\tLa copertura minima finale è:")
+                #stampa_cover(final_cover)
+
+                # Modifica della cover ai fini di sperimentazione. Procedo ad 
+                # aggiungere alla copertura minima dei percorsi specificati nel 
+                # grafo e vedo come cambia il risultato.
+
+                count = 0
+
+                print(f"Aggiungo alla cover {math.floor(perc*1060)} percorsi")
+
+                for percorso in percorsi.nomi_percorsi():
+
+                    if count == math.floor(perc*1060): 
+                        
+                        break
+
+                    path = percorsi.get_percorso(percorso)
+                    final_cover.append(path)
+                    count += 1
+
+                perc += 0.25
+
+                # Fine modifica cover
+
+                print(f"La lunghezza della cover ottenuta è:\t{len(final_cover)}")
+                print("Creo la matrice binaria della path cover")
+
+                topological_order = get_graph_topological_order(grafo)
+                matrix = path_cover_binary_matrix(topological_order, final_cover)
+                boolean_path = list()
+                decompose = list()
+
+                print("\tMatrice binaria creata")
+                print("Calcolo la PBWT della matrice binaria")
+
+                pbwt_values = pbwt(matrix)
+
+                print("\tFatto.")
+                print("Procedo a creare gli array booleani dei percorsi sul grafo")
+
+                for percorso in percorsi.nomi_percorsi():
+
+                    path = percorsi.get_percorso(percorso)
+                    boolean_path.append(to_boolean_array(topological_order, path))
+
+                print("\tPercorsi booleani creati")
+                print("Procedo con la decomposizione in blocchi tramite PBWT")
+
+                start = time.perf_counter()
+                media_nodi = 0
+                media_blocchi = 0
+
+                for path in boolean_path:
+
+                    blocks = blocks_decompose(path, matrix, pbwt_values)
+
+                    media_nodi += len(blocks) - blocks.count(-1)
+
+                    precedente = -1
+
+                    for node in blocks:
+
+                        if node != -1 and node != precedente:
+
+                            media_blocchi += 1
+                        
+                        precedente = node
+
+                    decompose.append(blocks)
+
+                    #print(blocks)
+                
+                end = time.perf_counter()
+
+                print(f"\tDecomposizioni in blocchi effettuata per {len(percorsi)} percorsi.")
+                print(f"\tMedia nodi:\t{round(media_nodi/len(decompose), 3)}")
+                print(f"\tMedia blocchi:\t{round(media_blocchi/len(decompose), 3)}")
+                print(f"\tTempo impiegato:\t{round(end-start, 1)}s")
+                print("Procedo a salvare il tutto su file:")
+                write_blocks(nomeFile, percorsi, decompose)
+                print("\tFatto.")
+
+            else:
+
+                print("I percosi trovati sono maggiori di quelli sul grafo!")
+
+    except Exception as e:
+
+        traceback.print_exc()
+
+
+
+
+if __name__ == "__main__":
+    
+    main()

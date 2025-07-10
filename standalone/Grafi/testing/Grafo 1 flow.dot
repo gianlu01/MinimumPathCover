@@ -1,0 +1,22 @@
+digraph{
+	rankdir=LR
+	Am -> Ap [label=3  color="red:green:blue"]
+	Ap -> Bm [label=1  color="green"]
+	Ap -> Dm [label=2  color="red:blue"]
+	Bm -> Bp [label=1  color="green"]
+	Bp -> Cm [label=1  color="green"]
+	Dm -> Dp [label=2  color="red:blue"]
+	Dp -> Em [label=2  color="red:blue"]
+	Cm -> Cp [label=2  color="red:green"]
+	Cp -> Hm [label=2  color="red:green"]
+	Hm -> Hp [label=2  color="red:green"]
+	Hp -> Im [label=2  color="red:green"]
+	Em -> Ep [label=2  color="red:blue"]
+	Ep -> Fm [label=2  color="red:blue"]
+	Fm -> Fp [label=2  color="red:blue"]
+	Fp -> Gm [label=1  color="blue"]
+	Fp -> Cm [label=1  color="red"]
+	Gm -> Gp [label=1  color="blue"]
+	Gp -> Im [label=1  color="blue"]
+	Im -> Ip [label=3  color="red:green:blue"]
+}
